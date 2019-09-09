@@ -851,7 +851,7 @@ $ d rwx r-x r-x 16 famel famel 4096 11月 21 13:45 /home/famel
 第五段：`"16"`，表示有多少文件名链接到此节点(i-node)
 第六段：```famel```，属主
 第七段：```famel```，属组
-第八段：```4096```，已经占用大小，默认单位Bytes
+第八段：```4096```，已经占用大小，默认单位Bytess
 第九段：`" 11月 21 13:45"`,创建日期或者是最近的修改日期
 第十段：`"/home/famel"`,文件名
 
@@ -1537,10 +1537,10 @@ Type类型
 | ------- | ------------------------------------------------------------ |
 | a       | 利用默认的字符来输出;                                        |
 | c       | 使用 ASCII 字符来输出                                        |
-| d[size] | 利用十进制(decimal)来输出数据,每个整数占用 size Bytes ;      |
-| f[size] | 利用浮点数值(floating)来输出数据,每个数占用 size Bytes ;     |
-| o[size] | 利用八进位(octal)来输出数据,每个整数占用 size Bytes ;        |
-| x[size] | 利用十六进制(hexadecimal)来输出数据,每个整数占用 size Bytes ; |
+| d[size] | 利用十进制(decimal)来输出数据,每个整数占用 size Bytess ;     |
+| f[size] | 利用浮点数值(floating)来输出数据,每个数占用 size Bytess ;    |
+| o[size] | 利用八进位(octal)来输出数据,每个整数占用 size Bytess ;       |
+| x[size] | 利用十六进制(hexadecimal)来输出数据,每个整数占用 size Bytess ; |
 
 ---
 
@@ -2083,7 +2083,7 @@ $ find /home -user liisyu
 | 选项           | 描述                                                         |
 | -------------- | ------------------------------------------------------------ |
 | -name filename | 搜寻文件名称为 filename 的文件                               |
-| -size [+-]SIZE | 搜寻比 SIZE 还要大(+)或小(-)的文件。<br />SIZE 的规格<br />c: 代表 Byte<br /> k: 代表 1024Bytes |
+| -size [+-]SIZE | 搜寻比 SIZE 还要大(+)或小(-)的文件。<br />SIZE 的规格<br />c: 代表 Bytes<br /> k: 代表 1024Bytess |
 | -type TYPE     | 搜寻文件的类型为 TYPE 的,类型主要有:一般正规文件 (f), 设备文件 (b, c),目录 (d), 链接文件 (l), socket (s), 及 FIFO (p) 等属性 |
 | -perm mode     | 寻文件权限“刚好等于” mode 的文件，mode 为类似 chmod的属性值。如4755对应-rwsr-xr-x |
 | -perm -mode    | 搜寻文件权限“必须要全部囊括 mode 的权限”的文件，如-perm -0744，另一个4755的文件也会被列出来 |
@@ -2273,7 +2273,7 @@ vim 文件
 
 盘片组成
 
-1. **扇区(Sector)**：依据磁盘设计的不同,目前主要有 512Bytes 与 4K 两种
+1. **扇区(Sector)**：依据磁盘设计的不同,目前主要有 512Bytess 与 4K 两种
    格式;（现在分区的最小物理存储单位）
 2. **柱面(Cylinder)**：扇区组成一个圆（早起分区的最小单位）
 
@@ -2282,9 +2282,9 @@ vim 文件
 磁盘分区表主要格式
 
 1. MBR 分区表：旧，限制多；,第一个扇区最重要，里面有
-   	a. 要开机区(Master boot record, MBR),占有446Bytes
+   	a. 要开机区(Master boot record, MBR),占有446Bytess
 
-   ​	b. 分区表(partition table),占有64Bytes
+   ​	b. 分区表(partition table),占有64Bytess
 
 2. GPT 分区表：新，限制少；除了分区数量扩充较多之外,支持的磁盘容量也可以超过 2TB
 
@@ -2327,7 +2327,286 @@ Ext2文件系统示意图
 
 
 
-开机扇区(Boot Sector)：位于文件系统最前面，可以装开机管理程序。
+---
+
+开机扇区(Boot Sector)：位于文件系统最前面，可以装开机管理程序。如此一来就能够将不同的开机管理程序安装到个别的文件系统最前端，而不用覆盖整颗磁盘唯一的 MBR
+
+---
+
+数据区块（data block）：放置文件内容数据地方，在 Ext2 文件系统中所支持的 block 大小有 1K, 2K 及 4K三种。block 大小的差异，会导致该文件系统能够支持的最大磁盘容量与最大单一文件大小并不相同。
+
+| Block大小          | 1KB  | 2KB   | 4KB  |
+| ------------------ | ---- | ----- | ---- |
+| 最大单一文件限制   | 16GB | 256GB | 2TB  |
+| 最大文件系统总容量 | 2TB  | 8TB   | 16TB |
+
+Ext2文件系统的block其他限制
+
+1. block 的大小与数量在格式化完就不能够再改变了（除非重新格式化）
+2. 每个 block 内最多只能够放置一个文件的数据
+3. 如果文件大于 block 的大小，则一个文件会占用多个 block 数量
+4. 若文件小于 block ，则该 block 的剩余容量就不能够再被使用了（磁盘空间会浪费)
+
+也就是说，如果文件系统存在大量的小文件，而block选用最大的4KB，那么将会造成巨大的浪费。但如果文件系统存在的大量的大文件，而block选用最小的1KB,那么一个文件将会占用多个block，且inode需要记录更多的block编号，会导致文件系统的不良读写性能。
+
+---
+
+inode表格(inode table)，记录的文件数据至少为以下方面
+
+1. 该文件的存取模式（read/write/excute）；
+2. 该文件的拥有者与群组（owner/group）；
+3. 该文件的容量；
+4. 该文件创建或状态改变的时间（ctime）；
+5. 最近一次的读取时间（atime）；
+6. 最近修改的时间（mtime）；
+7. 定义文件特性的旗标（flag），如 SetUID...；
+8. 该文件真正内容的指向 （pointer）
+
+inode 的数量与大小也是在格式化时就已经固定，其特点如下
+
+1. 每个 inode 大小均固定为 128 Bytess （新的 ext4 与 xfs 可设置到 256 Bytess）；
+2. 每个文件都仅会占用一个 inode 而已；
+3. 文件系统能够创建的文件数量与 inode 的数量有关；
+4. 系统读取文件时需要先找到 inode，并分析 inode 所记录的权限与使用者是否符合，若符合才能够
+   开始实际读取 block 的内容。
+
+inode结构图
+
+![](./inode.jpg)
+
+inode存放一个block编号需要4Bytes，而其本身只有128Bytes大小。只能指向32个block。如果block大小为4K，那么一个Inode最多只能指向128KB的数据。那么一个400M的数据，将会需要大量的inode。
+
+显然，这是不行的。所以inode的特殊结构就能很好解决这个问题：inode 记录 block 号码的区域定义为12个直接，一个间接, 一个双间接与一个三间接记
+
+1. 12 个直接：该12 笔记录就能够直接取得 block 号码
+2. 间接：拿一个 `block` 来当作记录 `block` 编号
+3. 双间接：第一个 `block` 仅再指出下一个记录号码的 `block` 在哪里， 实际记录的在第二个 block 
+4. 三间接：利用第三层 block 来记录号码
+
+以bloc大小为1KB为例，一个inode能指向多大的block呢？
+
+1. 12个直接，指向12个block，即12KB数据
+2. 一个间接，指向一个block，而该block存放着其他block的编号。1KB大小能存放256个编号，即256K
+3. 一个双间接：256 * 256 * 1K
+4. 一个三简介：256 * 256 * 256 * 1K
+5. 结果：12K+256K+256 * 256 * 1K+256 * 256 * 256 * 1K = 16GB
+
+可以看到，这样的结构设计，一个Inode指向的数据已经非常大了。并且可以发现，16GB刚好是单文件限制大小。不过需要注意的是，这样的计算方式不能用在 2K 及 4K block 大小的計算中，因为大于2K的block会受到Ext2文件系统本身的限制。
+
+---
+
+超级区块(Superblock)：记录整个文件系统相关信息,大小为1024Bytes
+
+1. block 与 inode 的总量；
+2. 未使用与已使用的 inode / block 数量；
+3. block 与 inode 的大小 （block 为 1, 2, 4K，inode 为 128Bytess 或 256Bytess）；
+4. 文件系统的挂载时间、最近一次写入数据的时间、最近一次检验磁盘 （fsck） 的时间等文件系统的相关信息；
+5. 一个 valid bit 数值，若此文件系统已被挂载，则 valid bit 为 0 ，若未被挂载，则 valid bit 为 1 
+
+查看Ext2文件系统示意图，可以发现每个 block group 都可能含有 superblock,但一个文件系统应该仅有一个 superblock。事实上除了第一个block group外，后续的 block group如果有superblock,主要是做为第一个 block group 内superblock 的备份。
+
+---
+
+文件系统描述说明(Filesystem Description)：描述每个 block group 的开始与结束的 block 号码，以及说明每个区段 （superblock,bitmap, inodemap, data block） 分别介于哪一个 block 号码之间
+
+---
+
+区块对照表（block bitmap）：记录使用与未使用的 block号码
+
+---
+
+inode 对照表（inode bitmap）：记录使用与未使用的 inode 号码
+
+---
+
+## 文件系统中的目录与文件
+
+目录
+
+在 Linux 下的文件系统创建一个目录时，文件系统会分配一个 inode 与至少一块 block 给该目录。inode 记录该目录的相关权限与属性，并可记录分配到的那块 block 号码； 而 block 则是记录在这个目录下的文件名与该文件名占用的 inode 号码数据。
+
+```shell
+# 查看文件夹内的文件所占用的 inode 号码
+$ ls -li
+```
+
+---
+
+文件
+
+在 Linux 下的 ext2 创建一个一般文件时， ext2 会分配一个 inode 与相对于该文件大小的 block 数量给该文件。以block大小为4KB为例，一个100 KBytes 的文件，就需要一个 inode 与 25 个 block ，但还需要一个额外的Block用于存放block的编号(一个间接)
+
+---
+
+文件的读取流程
+
+以/etc/passwd 为例，目录与文件如下所示
+
+```shell
+$ ll -di / /etc /etc/passwd
+128 dr-xr-xr-x. 17 root root 4096 May 4 17:56 /
+33595521 drwxr-xr-x. 131 root root 8192 Jun 17 00:20 /etc
+36628004 -rw-r--r--. 1 root root 2092 Jun 17 00:20 /etc/passwd
+```
+
+总共经历了如下步骤（以普通用户dmtsai 访问）
+
+1. / 的 inode： 通过挂载点的信息找到 inode 号码为 128 的根目录 inode，且 inode 规范的权
+   限让我们可以读取该 block 的内容（有 r 与 x） ；
+
+2. / 的 block： 经过上个步骤取得 block 的号码，并找到该内容有 etc/ 目录的 inode 号码
+  （33595521）；
+
+3. etc/ 的 inode： 读取 33595521 号 inode 得知 dmtsai 具有 r 与 x 的权限，因此可以读取 etc/
+  的 block 内容；
+
+4. etc/ 的 block： 经过上个步骤取得 block 号码，并找到该内容有 passwd 文件的 inode 号码
+  （36628004）；
+
+5. passwd 的 inode： 读取 36628004 号 inode 得知 dmtsai 具有 r 的权限，因此可以读取
+  passwd 的 block 内容；
+
+6. passwd 的 block： 最后将该 block 内容的数据读出来。
+
+   
+
+通常整个文件系统上面的文件通常无法连续写在一起，而是填入式的将数据填入没有被使用的 block 当中。 ext2 在 inode 处已经将该文件所记录的 block 号码都记上了， 所以数据可以一次性读取。但当文件数据真的太过于离散，还是有可能发生效率低的问题（可能不怎么容易发生），原因是磁头要在整个文件系统中来来去去的频繁读取。这次，可以将整个数据全部复制出来，然后格式化文件系统，再将数据复制回去即可解决。
+
+---
+
+文件/目录的新建流程
+当新建一个文件或者目录时，文件系统的执行流程如下
+
+1. 先确定使用者对于欲新增文件的目录是否具有 w 与 x 的权限，若有的话才能新增；
+2. 根据 inode bitmap 找到没有使用的 inode 号码，并将新文件的权限/属性写入；
+3. 根据 block bitmap 找到没有使用中的 block 号码，并将实际的数据写入 block 中，且更新 inode 的
+  block 指向数据；
+4. 将刚刚写入的 inode 与 block 数据同步更新 inode bitmap 与 block bitmap，并更新 superblock 的内
+  容。
+
+
+
+ `inode table` 与 `data block` 称为**数据存放区域**，其他例如 `superblock`、 `block bitmap`与 `inode bitmap` 等区段就被称为 **metadata （中介数据）**，新增、移除、编辑时都可能会影响到中介数据。
+
+---
+
+日志式文件系统 （Journaling filesystem）
+
+当文件在写入文件系统时，因为不知名原因导致系统中断，可能文件系统只执行到了第3步，还没有进行最后的同步更新。此时就会发生中介数据与实际数据存放区的不一致。
+
+在早期，系统在重新开机的时候，就会借由 Superblock 当中记录的 valid bit （是否有挂载） 与 filesystem state （clean 与否） 等状态来判断是否强制进行数据一致性的检查。但是需要对 metadata 区域与实际数据存放区来进行比对，耗费大量时间（需要搜索整个文件系统）
+
+后来，更有效率日志式文件系统的出现了。其工作流程如下
+
+1. 预备：当系统要写入一个文件时，会先在日志记录区块中记录某个文件准备要写入的信息；
+
+2. 实际写入：开始写入文件的权限与数据；开始更新 `metadata` 的数据；
+3. 结束：完成数据与 metadata 的更新后，在日志记录区块当中完成该文件的纪录
+
+当文件在写入过程中发生错误，只需要去检查日志记录区块，就能定位到哪个文件发生了问题，然后针对该问题来做一致性的检查，而不需要搜索整个文件系统，从而大大的缩短了修复时间。
+
+---
+
+挂载点
+
+文件系统要能够链接到目录树才能被使用，而 将文件系统与目录树结合的动作称为“挂载”。一个挂载点最顶层目录的 inode 一般为 128 
+
+```shell
+$ ls -lid / 
+128 dr-xr-xr-x. 17 root root 4096 May 4 17:56 /
+```
+
+同一个 文件系统的某个 inode 只会对应到一个文件内容，所以可以用inode号来判断不同文件名是否为相同的文件
+
+```shell
+# / /. /.. 均在同一个文件系统，且inode相同，即三个文件的内容也会相同 
+$ ls -ild / /. /..
+128 dr-xr-xr-x. 17 root root 4096 May 4 17:56 /
+128 dr-xr-xr-x. 17 root root 4096 May 4 17:56 /.
+128 dr-xr-xr-x. 17 root root 4096 May 4 17:56 /..
+```
+
+## XFS文件系统
+
+CentOS 7 开始，默认的文件系统已经由原本的 EXT4 变成了 XFS 文件系统。主要原因为：EXT家族虽然支持度最广，但格式化超慢
+
+XFS是一个日志式文件系统,在数据的分佈上，主要规划为三个部份，一个**数据区 （data section）**、一个**文件系统活动**
+**登录区 （log section）**以及一个**实时运行区 （realtime section）**
+
+---
+
+数据区 （data section）
+
+与`EXT`文件系统的不同点：xfs 的 block 与 inode 有多种不同的容量可供设置，block 容量可由512Bytes ~ 64K 调配。不过由于内存控制的关系 （分页档 pagesize 的容量之故），最高可以使用的 block 大小还是为 4K。
+
+**所以该区与Ext基本上相同。** 
+
+---
+
+文件系统活动登录区 （log section）:主要被用来记录文件系统的变化，类似于日志区。从文件变化到完整的写入到数据区后， 记录才会被终结。如果写入出错，系统则依据登录区块来进行检验，以便于快速恢复系统。
+
+可以指定外部的磁盘来作为 xfs 文件系统的日志区块。
+
+---
+
+实时运行区 （realtime section）
+
+当有文件要被创建时，xfs 会在这个区段里面找一个到数个的 extent 区块，将文件放置在这个区块内，等到分配完毕后，再写入到 data section 的 inode 与 block 去。
+
+extent在格式化时需要指定大小，最小值是 4K 最大可到 1G。一般非磁盘阵列的磁盘默认为 64K 容量，而具有类似磁盘阵列的 stripe 情况下，则建议 extent 设置为与 stripe 一样大较佳。
+
+## 相关指令
+
+查询 Ext 家族 superblock 信息
+
+```shell
+# EXT文件系统专用
+$ dumpe2fs [-bh] 设备文件名
+```
+
+| 选项 | 描述                                             |
+| ---- | ------------------------------------------------ |
+| -b   | 列出保留为坏轨的部分                             |
+| -h   | 仅列出 superblock 的数据，不会列出其他的区段内容 |
+
+示例
+
+```shell
+$ dumpe2fs /dev/vda5
+# 结果
+dumpe2fs 1.42.9 （28-Dec-2013）
+Filesystem volume name: &lt;none&gt; # 文件系统的名称（不一定会有）
+Last mounted on: &lt;not available&gt; # 上一次挂载的目录位置
+Filesystem UUID: e20d65d9-20d4-472f-9f91-cdcfb30219d6
+Filesystem magic number: 0xEF53 # 上方的 UUID 为 Linux 对设备的定义码
+Filesystem revision #: 1 （dynamic） # 下方的 features 为文件系统的特征数据
+....
+```
+
+查询 Ext 家族 superblock 信息
+
+```shell
+$ xfs_info 设备文件名
+```
+
+示例
+
+```shell
+$ xfs_info /dev/vda2
+1 meta-data=/dev/vda2 isize=256 agcount=4, agsize=65536 blks
+2 = sectsz=512 attr=2, projid32bit=1
+3 = crc=0 finobt=0
+4 data = bsize=4096 blocks=262144, imaxpct=25
+5 = sunit=0 swidth=0 blks
+6 naming =version 2 bsize=4096 ascii-ci=0 ftype=0
+7 log =internal bsize=4096 blocks=2560, version=2
+8 = sectsz=512 sunit=0 blks, lazy-count=1
+9 realtime =none extsz=4096 blocks=0, rtextents=0
+```
+
+---
+
+
 
 ## 查看I/O信息
 
@@ -2365,7 +2644,7 @@ dd
 famel@famel-virtual-machine:~$ sudo dd if=/dev/sdb1 of=/a.txt bs=500M count=2
 2+0 records in
 2+0 records out
-1048576000 bytes (1.0 GB, 1000 MiB) copied, 19.2122 s, 54.6 MB/s
+1048576000 Bytess (1.0 GB, 1000 MiB) copied, 19.2122 s, 54.6 MB/s
 ```
 
 
@@ -2426,10 +2705,10 @@ part1:
 ```java
 //Disk /dev/sda：表明 /dev/sda是一个磁盘
 //25 GiB：磁盘大小为25GB
-//26843545600 bytes,磁盘大小字节为26843545600
+//26843545600 Bytess,磁盘大小字节为26843545600
 //52428800 sectors：有52428800 个扇区
 
-Disk /dev/sda: 25 GiB, 26843545600 bytes, 52428800 sectors
+Disk /dev/sda: 25 GiB, 26843545600 Bytess, 52428800 sectors
 ```
 
 
@@ -2438,7 +2717,7 @@ part2:
 
 ```java
 //每一个扇区单位是512字节
-Units: sectors of 1 * 512 = 512 bytes
+Units: sectors of 1 * 512 = 512 Bytess
 ```
 
 
@@ -2447,7 +2726,7 @@ part3:
 
 ```java
 //扇区大小(逻辑/物理):512字节/512字节
-Sector size (logical/physical): 512 bytes / 512 bytes
+Sector size (logical/physical): 512 Bytess / 512 Bytess
 ```
 
 
@@ -2456,7 +2735,7 @@ part4:
 
 ```java
 //I/O大小(最小/最佳):512字节/512字节
-I/O size (minimum/optimal): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 Bytess / 512 Bytess
 ```
 
 
